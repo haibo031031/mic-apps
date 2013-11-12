@@ -1,0 +1,27 @@
+#!/bin/bash
+fName="timeInfo.dat"
+dirName="/home/jfang/rodinia_2.4/openmp/"
+dirFull="/home/jfang/rodinia_2.4/openmp/leukocyte_par/"
+os=(1 2 3 4 6 9 12 18 36)
+
+# compile 
+make clean; make 
+
+# transfer
+scp -r ../leukocyte_par/  mic0:${dirName}
+
+# remove the old file
+ssh mic0 "cd ${dirFull}; rm $fName"
+
+# run
+for o in ${os[@]}; do
+	for i in ${is[@]}; do
+		ssh mic0 "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/lib64/; cd ${dirFull}; ./OpenMP/leukocyte 10 ${o} ${i} ../../data/leukocyte/testfile.avi | grep 'cambine' | tr -d '[A-Za-z: \n]' >> ${fName}"
+		ssh mic0 "cd ${dirFull}; echo -en '\t' >> $fName"
+	done
+	ssh mic0 "cd ${dirFull}; echo ' ' >> $fName"
+done
+
+# download data
+
+scp mic0:${dirFull}/$fName .
